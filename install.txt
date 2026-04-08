@@ -2,8 +2,8 @@ Write-Host "License Key : " -NoNewline -ForegroundColor White
 $key = Read-Host
 
 # เช็ค key กับ KeyAuth
-$appName  = "unban"
-$ownerId  = "zL6v53KLG9"
+$appName  = "criticalxlife"
+$ownerId  = "DMPIDwByUX"
 $version  = "1.0"
 $apiUrl   = "https://keyauth.win/api/1.2/"
 
