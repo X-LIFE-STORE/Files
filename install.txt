@@ -1,1 +1,93 @@
-IyBDaGVjayBmb3IgQWRtaW4gUHJpdmlsZWdlcw0KaWYgKC1ub3QgKFtTZWN1cml0eS5QcmluY2lwYWwuV2luZG93c1ByaW5jaXBhbF1bU2VjdXJpdHkuUHJpbmNpcGFsLldpbmRvd3NJZGVudGl0eV06OkdldEN1cnJlbnQoKSkuSXNJblJvbGUoW1NlY3VyaXR5LlByaW5jaXBhbC5XaW5kb3dzQnVpbHRJblJvbGVdOjpBZG1pbmlzdHJhdG9yKSkgew0KICAgICRhcmdMaXN0ID0gQCgiLU5vUHJvZmlsZSIsICItRXhlY3V0aW9uUG9saWN5IiwgIkJ5cGFzcyIsICItQ29tbWFuZCIsICImIHsgJCgoR2V0LUNvbnRlbnQgJE15SW52b2NhdGlvbi5NeUNvbW1hbmQuRGVmaW5pdGlvbikpIH0iKQ0KICAgIFN0YXJ0LVByb2Nlc3MgcG93ZXJzaGVsbC5leGUgLVZlcmIgUnVuQXMgLUFyZ3VtZW50TGlzdCAkYXJnTGlzdA0KICAgIGV4aXQNCn0NCg0KV3JpdGUtS29zdCAiWysrKy0gWC1MSUZFIFNUT1JFIC0rKysrXSINCldyaXRlLUhvc3QgIkxpY2Vuc2UgS2V5IDogIiAtTm9OZXdsaW5lIC1Gb3JlZ3JvdW5kQ29sb3IgV2hpdGUNCiRrZXkgPSBSZWFkLUhvc3QNCg0KIyAtLS0gS0VZQVVUSCBDSEVDSyAtLS0NCiRhcHBOYW1lID0gImNyaXRpY2FseGxpZmUiIDsgJG93bmVySWQgPSAiRG1wSURnQnlVWCINCiR2ZXJzaW9uID0gIjEuMCIgOyAkYXBpVXJsID0gImh0dHBzOi8va2V5YXV0aC53aW4vYXBpLzEuMi8iDQoNCnRyeSB7DQogICAgJGluaXRSZXNwID0gSW52b2tlLVJlc3RNZXRob2QgLVVyaSAkYXBpVXJsIC1NZXRob2QgUG9zdCAtQm9keSAidHlwZT1pbml0JnZlcj0kdmVyc2lvbiZuYW1lPSRhcHBOYW1lJm93bmVyaWQ9JG93bmVySWQiIC1Db250ZW50VHlwZSAiYXBwbGljYXRpb24veC13d3ctZm9ybS11cmxlbmNvZGVkIg0KICAgIGlmICgkaW5pdFJlc3Auc3VjY2VzcyAtbmUgJHRydWUpIHsgV3JpdGUtS29zdCAiSW5pdCBGYWlsZWQhIjsgZXhpdCAxIH0NCiAgICAkc2Vzc2lvbklkID0gJGluaXRSZXNwLnNlc3Npb25pZCA7ICRod2lkID0gKEdldC1XbWlPYmplY3QgV2luMzJfQ29tcHV0ZXJTeXN0ZW1Qcm9kdWN0KS5VVUlEDQogICAgJGxpY1Jlc3AgPSBJbnZva2UtUmVzdE1ldGhvZCAtVXJpICRhcGlVcmwgLU1ldGhvZCBQb3N0IC1Cb2keICJ0eXBlPWxpY2Vuc2Uma2V5PSRrZXkmaHdpZD0kaHdpZCZzZXNzaW9uSWQ9JHNlc3Npb25JZCZuYW1lPSRhcHBOYW1lJm93bmVyaWQ9JG93bmVySWQiIC1Db250ZW50VHlwZSAiYXBwbGljYXRpb24veC13d3ctZm9ybS11cmxlbmNvZGVkIg0KICAgIGlmICgkbGljUmVzcC5zdWNjZXNzIC1uZSAkdHJ1ZSkgeyBXcml0ZS1Ib3N0ICJJbnZhbGlkIEtleSEiIC1Gb3JlZ3JvdW5kQ29sb3IgUmVkOyBleGl0IDEgfQ0KfSBjYXRjaCB7IFdyaXRlLUhvc3QgIkNvbW5lY3Rpb24gRXJyb3IhIjsgZXhpdCAxIH0NCg0KV3JpdGUtS29zdCAiU1VDQ0VTUyEgRG93bmxvYWRpbmcgcGF5bG9hZC4uLiIgLUZvcmVncm91bmRDb2xvciBHcmVlbg0KDQojIC0tLSBET1dOTE9BRA0KJGRsbFVybCA9ICJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vWC1MSUZFIFNUT1JFL0ZpbGVzL21haW4vdmVyc2lvbi5kbGwiDQokdG1wRGxsID0gIiRlbnY6VEVNUFx2ZXJzaW9uLmRsbCINCmlmIChUZXN0LVBhdGggJHRtcERsbCkgeyBSZW1vdmUtSXRlbSAkdG1wRGxsIC1Gb3JjZSB9DQppbnZva2Utd2VicmVxdWVzdCAtVXJpICRkbGxVcmwgLU91dEZpbGUgJHRtcERsbA0KDQojIC0tLSBJTlNUQUxMIFRPIExHSFVCDQokbGdodWJQYXRoID0gIkM6XFByb2dyYW0gRmlsZXNcTEdIVUIiDQppZiAoLVBhdGggJGxnaHViUGF0aCkgew0KICAgIFdyaXRlLUhvc3QgIlVwZGF0aW5nIExHSFVCIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCiAgICBTdG9wLVByb2Nlc3MgLU5hbWUgImxnaHViKiIgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlDQogICAgU3RhcnQtU2xlZXAgLVNlY29uZHMgMg0KICAgICRkZXN0ID0gSm9pbi1QYXRoICRsZ2h1YlBhdGggInZlcnNpb24uZGxsIg0KICAgIFJlbW92ZS1SXRlbSAoSm9pbi1QYXRoICRsZ2h1YlBhdGggImR4Z2kuZGxsIikgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlDQogICAgQ29weS1SXRlbSAtUGF0aCAkdG1wRGxsIC1EZXN0aW5hdGlvbiAkZGVzdCAtRm9yY2UNCiAgICBXcml0ZS1Ib3N0ICJJTlNUQUxMRUQgU1VDQ0VTU0ZVTExZISIAtRm9yZWdyb3VuZENvbG9yIEdyZWVuDQp9IGVsc2Ugew0KICAgIFdyaXRlLUhvc3QgIkxHSFVCIE5PVCBGT1VORCIgLUZvcmVncm91bmRDb2xvciBSZWQNCn0NCg0KUmVtb3ZlLUl0ZW0gJHRtcERsbCAtRm9yY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUNCmNscw0KV3JpdGUtS29zdCAiRE9ORS4gWW91IGNhbiBub3cgcnVuIExHSFVCLiINCmFkZC10eXBlIC1hc3NlbWJseW5hbWUgc3lzdGVtLndpbmRvd3MuZm9ybXMNCltzeXN0ZW0ud2luZG93cy5mb3Jtcy5tZXNzYWdlYm94XTo6c2hvdygnSW5zdGFsbGF0aW9uIENvbXBsZXRlIScsICdTdGV2ZVgnKQ0KUGF1c2UNCg==
+# Check for Admin Privileges
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Restarting as Administrator..." -ForegroundColor Yellow
+    $argList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$PSCommandPath`"")
+    Start-Process powershell.exe -Verb RunAs -ArgumentList $argList
+    exit
+}
+
+Write-Host "License Key : " -NoNewline -ForegroundColor White
+$key = Read-Host
+
+# เช็ค key กับ KeyAuth
+$appName  = "criticalxlife"
+$ownerId  = "DMPIDwByUX"
+$version  = "1.0"
+$apiUrl   = "https://keyauth.win/api/1.2/"
+
+# Init session
+$initBody = "type=init&ver=$version&name=$appName&ownerid=$ownerId"
+try {
+    $initResp = Invoke-RestMethod -Uri $apiUrl -Method Post -Body $initBody -ContentType "application/x-www-form-urlencoded"
+} catch {
+    Write-Host "Connection failed." -ForegroundColor Red
+    exit 1
+}
+
+if ($initResp.success -ne $true) {
+    Write-Host "Init failed." -ForegroundColor Red
+    exit 1
+}
+
+$sessionId = $initResp.sessionid
+$hwid = (Get-WmiObject Win32_ComputerSystemProduct).UUID
+
+# Verify license
+$licBody = "type=license&key=$([Uri]::EscapeDataString($key))&hwid=$([Uri]::EscapeDataString($hwid))&sessionid=$sessionId&name=$appName&ownerid=$ownerId"
+try {
+    $licResp = Invoke-RestMethod -Uri $apiUrl -Method Post -Body $licBody -ContentType "application/x-www-form-urlencoded"
+} catch {
+    Write-Host "Connection failed." -ForegroundColor Red
+    exit 1
+}
+
+if ($licResp.success -ne $true) {
+    Write-Host "Invalid key." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Success! Installing..." -ForegroundColor Green
+
+# ติดตั้งไปที่ LGHUB
+$lghubPath = "C:\Program Files\LGHUB"
+
+if (-not (Test-Path $lghubPath)) {
+    Write-Host "Logitech G HUB not found at: $lghubPath" -ForegroundColor Red
+    exit 1
+}
+
+$dest = Join-Path $lghubPath "version.dll"
+$oldDxgiDll = Join-Path $lghubPath "dxgi.dll"
+
+# หาไฟล์ Binary ในเครื่อง (จากที่ Build ใน VS)
+$localSource = Get-ChildItem -Path "$PSScriptRoot\dxgimain\dxgi\x64\Release\version.dll", "$PSScriptRoot\dxgimain\dxgi\x64\Debug\version.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+if (-not $localSource) {
+    Write-Host "Error: Built DLL not found! Please Build the project in Visual Studio first (Ctrl+Shift+B)." -ForegroundColor Red
+    Pause
+    exit 1
+}
+
+# Force close LGHUB to release the file lock
+Write-Host "Closing LGHUB to update file..." -ForegroundColor Cyan
+Stop-Process -Name "lghub*" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+
+# Cleanup old dxgi.dll if exists to avoid conflict
+if (Test-Path $oldDxgiDll) {
+    Remove-Item $oldDxgiDll -Force -ErrorAction SilentlyContinue
+}
+
+# Copy and install as version.dll
+Write-Host "Installing local binary: $($localSource.FullName) -> $dest" -ForegroundColor White
+try {
+    Copy-Item -Path $localSource.FullName -Destination $dest -Force -ErrorAction Stop
+    Write-Host "Done! Installed successfully (version.dll)." -ForegroundColor Green
+} catch {
+    Write-Host "Failed to install: $($_.Exception.Message)" -ForegroundColor Red
+    if ($_.Exception.Message -like "*denied*") {
+        Write-Host "Try closing LGHUB manually from Task Manager or check if another program is using the file." -ForegroundColor Yellow
+    }
+}
+
+Pause
