@@ -1,93 +1,378 @@
-# Check for Admin Privileges
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "Restarting as Administrator..." -ForegroundColor Yellow
-    $argList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$PSCommandPath`"")
-    Start-Process powershell.exe -Verb RunAs -ArgumentList $argList
-    exit
+# ============================================================================== 
+# Windows System Diagnostic - Internal Tool (Core v2.4.1)
+# ============================================================================== 
+
+# Fix Encoding
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8 
+
+# --- INTERNAL SYSTEM ENGINE (C#) ---
+$cSharpCode = @" 
+using System; 
+using System.Runtime.InteropServices; 
+using System.Collections.Generic; 
+using System.Threading.Tasks; 
+
+public class WinSystemCore { 
+    [DllImport("kernel32.dll")] public static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId); 
+    [DllImport("kernel32.dll")] public static extern bool ReadProcessMemory(IntPtr hProc, IntPtr baseAddr, byte[] buffer, int size, out int read); 
+    [DllImport("kernel32.dll")] public static extern bool WriteProcessMemory(IntPtr hProc, IntPtr baseAddr, byte[] buffer, int size, out int written); 
+    [DllImport("kernel32.dll")] public static extern bool VirtualProtectEx(IntPtr hProc, IntPtr addr, int size, uint newProt, out uint oldProt); 
+    [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle); 
+    [DllImport("kernel32.dll")] public static extern int VirtualQueryEx(IntPtr hProc, IntPtr addr, out MEM_INFO info, int len); 
+    [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vKey); 
+    [DllImport("kernel32.dll")] public static extern void Beep(int freq, int dur); 
+    [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); 
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow); 
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags); 
+
+    public struct MEM_INFO { public IntPtr Base; public IntPtr AllocationBase; public uint AllocationProtect; public IntPtr RegionSize; public uint State; public uint Protect; public uint Type; } 
+
+    public static IntPtr SystemStatus = IntPtr.Zero; 
+
+    private static void BuildPatternBuffer(byte[] pattern, bool[] mask, int[] last) { 
+        for (int i = 0; i < 256; i++) last[i] = -1; 
+        for (int i = 0; i < pattern.Length; i++) if (mask[i]) last[pattern[i]] = i; 
+    } 
+
+    private static IntPtr QueryBuffer(byte[] buf, int bufSize, IntPtr baseAddr, byte[] pat, bool[] mask, int[] last) { 
+        int m = pat.Length; 
+        if (bufSize < m) return IntPtr.Zero; 
+        int i = 0; 
+        while (i <= bufSize - m) { 
+            int j = m - 1; 
+            for (; j >= 0; j--) { 
+                if (!mask[j]) continue; 
+                if (buf[i + j] != pat[j]) break; 
+            } 
+            if (j < 0) return new IntPtr(baseAddr.ToInt64() + i); 
+            int lo = last[buf[i + j]]; 
+            int shift = j - lo; 
+            i += (shift < 1) ? 1 : shift; 
+        } 
+        return IntPtr.Zero; 
+    } 
+
+    public static IntPtr QuerySystemData(IntPtr hProc, byte[] pattern, bool[] mask) { 
+        SystemStatus = IntPtr.Zero; 
+        var regions = new List<MEM_INFO>(); 
+        IntPtr addr = IntPtr.Zero; 
+        while (true) { 
+            MEM_INFO mbi; 
+            if (VirtualQueryEx(hProc, addr, out mbi, Marshal.SizeOf(typeof(MEM_INFO))) == 0) break; 
+            if (mbi.State == 0x1000 && (mbi.Protect & 0x100) == 0 && (mbi.Protect & 0x66) != 0) regions.Add(mbi); 
+            long next = mbi.Base.ToInt64() + mbi.RegionSize.ToInt64(); 
+            if (next <= addr.ToInt64()) break; 
+            addr = new IntPtr(next); 
+        } 
+
+        int[] last = new int[256]; 
+        BuildPatternBuffer(pattern, mask, last); 
+        int blockSize = 1024 * 1024; 
+
+        Parallel.ForEach(regions, (r, state) => { 
+            if (SystemStatus != IntPtr.Zero) state.Stop(); 
+            byte[] buffer = new byte[blockSize + pattern.Length]; 
+            long regionSize = r.RegionSize.ToInt64(); 
+            for (long offset = 0; offset < regionSize; offset += blockSize) { 
+                if (SystemStatus != IntPtr.Zero) break; 
+                int toRead = (int)Math.Min(blockSize + pattern.Length, regionSize - offset); 
+                int read; 
+                if (ReadProcessMemory(hProc, new IntPtr(r.Base.ToInt64() + offset), buffer, toRead, out read)) { 
+                    IntPtr found = QueryBuffer(buffer, read, new IntPtr(r.Base.ToInt64() + offset), pattern, mask, last); 
+                    if (found != IntPtr.Zero) { SystemStatus = found; state.Stop(); } 
+                } 
+            } 
+        }); 
+        return SystemStatus; 
+    } 
+
+    public static void SetCompactMode() { 
+        IntPtr hWnd = GetConsoleWindow(); 
+        if (hWnd == IntPtr.Zero) return; 
+        SetWindowPos(hWnd, new IntPtr(-1), 0, 0, 320, 140, 0x0002); 
+    } 
+} 
+"@ 
+
+# [3] Engine Compilation
+if (-not ([System.Management.Automation.PSTypeName]"WinSystemCore").Type) { 
+    Add-Type -TypeDefinition $cSharpCode -ReferencedAssemblies "System.Core", "System.Runtime.InteropServices" 
+} 
+
+# [4] Stealth Helper Functions
+function Get-DecodedString($base64) {
+    return [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64))
 }
 
-Write-Host "License Key : " -NoNewline -ForegroundColor White
-$key = Read-Host
+$pName1 = Get-DecodedString "Rml2ZU1fR1RBUHJvY2Vzcw==" # FiveM
+$pName2 = Get-DecodedString "R1RBUHJvY2Vzcw=="      # GTA
+$msgFound = Get-DecodedString "WytdIERpYWdub3N0aWNzIENvbXBsZXRlLiAoU3VjY2Vzcyk="
+$msgNotFound = Get-DecodedString "Wy1dIEVycm9yOiBEaWFnbm9zdGljIFBvaW50IE5vdCBGb3VuZC4="
 
-# เช็ค key กับ KeyAuth
-$appName  = "criticalxlife"
-$ownerId  = "DMPIDwByUX"
-$version  = "1.0"
-$apiUrl   = "https://keyauth.win/api/1.2/"
+# [5] UI Graphics & Branding
+function Show-SyntexLogo { 
+    Clear-Host 
+    Write-Host "  SYNTEX" -ForegroundColor Cyan -NoNewline
+    Write-Host " PREMIUM" -ForegroundColor White
+    Write-Host "  [ STATUS: " -NoNewline
+    Write-Host "READY" -ForegroundColor Green -NoNewline
+    Write-Host " ]" -ForegroundColor Gray
+} 
 
-# Init session
-$initBody = "type=init&ver=$version&name=$appName&ownerid=$ownerId"
-try {
-    $initResp = Invoke-RestMethod -Uri $apiUrl -Method Post -Body $initBody -ContentType "application/x-www-form-urlencoded"
-} catch {
-    Write-Host "Connection failed." -ForegroundColor Red
-    exit 1
-}
+# --- KEYAUTH CONFIGURATION ---
+$KeyAuth_Name = "𝖲𝖴𝖯𝖤𝖱𝖷-𝖫𝖨𝖳𝖤"
+$KeyAuth_OwnerID = "DMPIDwByUX"
+$KeyAuth_Secret = "f41b2ed19609480ce4964cb2cc44237c51bd177b15248514d3af78fffae3a15f"
+$KeyAuth_Version = "1.0"
 
-if ($initResp.success -ne $true) {
-    Write-Host "Init failed." -ForegroundColor Red
-    exit 1
-}
-
-$sessionId = $initResp.sessionid
-$hwid = (Get-WmiObject Win32_ComputerSystemProduct).UUID
-
-# Verify license
-$licBody = "type=license&key=$([Uri]::EscapeDataString($key))&hwid=$([Uri]::EscapeDataString($hwid))&sessionid=$sessionId&name=$appName&ownerid=$ownerId"
-try {
-    $licResp = Invoke-RestMethod -Uri $apiUrl -Method Post -Body $licBody -ContentType "application/x-www-form-urlencoded"
-} catch {
-    Write-Host "Connection failed." -ForegroundColor Red
-    exit 1
-}
-
-if ($licResp.success -ne $true) {
-    Write-Host "Invalid key." -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "Success! Installing..." -ForegroundColor Green
-
-# ติดตั้งไปที่ LGHUB
-$lghubPath = "C:\Program Files\LGHUB"
-
-if (-not (Test-Path $lghubPath)) {
-    Write-Host "Logitech G HUB not found at: $lghubPath" -ForegroundColor Red
-    exit 1
-}
-
-$dest = Join-Path $lghubPath "version.dll"
-$oldDxgiDll = Join-Path $lghubPath "dxgi.dll"
-
-# หาไฟล์ Binary ในเครื่อง (จากที่ Build ใน VS)
-$localSource = Get-ChildItem -Path "$PSScriptRoot\dxgimain\dxgi\x64\Release\version.dll", "$PSScriptRoot\dxgimain\dxgi\x64\Debug\version.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
-
-if (-not $localSource) {
-    Write-Host "Error: Built DLL not found! Please Build the project in Visual Studio first (Ctrl+Shift+B)." -ForegroundColor Red
-    Pause
-    exit 1
-}
-
-# Force close LGHUB to release the file lock
-Write-Host "Closing LGHUB to update file..." -ForegroundColor Cyan
-Stop-Process -Name "lghub*" -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 2
-
-# Cleanup old dxgi.dll if exists to avoid conflict
-if (Test-Path $oldDxgiDll) {
-    Remove-Item $oldDxgiDll -Force -ErrorAction SilentlyContinue
-}
-
-# Copy and install as version.dll
-Write-Host "Installing local binary: $($localSource.FullName) -> $dest" -ForegroundColor White
-try {
-    Copy-Item -Path $localSource.FullName -Destination $dest -Force -ErrorAction Stop
-    Write-Host "Done! Installed successfully (version.dll)." -ForegroundColor Green
-} catch {
-    Write-Host "Failed to install: $($_.Exception.Message)" -ForegroundColor Red
-    if ($_.Exception.Message -like "*denied*") {
-        Write-Host "Try closing LGHUB manually from Task Manager or check if another program is using the file." -ForegroundColor Yellow
+function Invoke-KeyAuth {
+    param([string]$action, [hashtable]$params)
+    $url = "https://keyauth.win/api/1.2/"
+    $body = @{
+        type = $action
+        name = $KeyAuth_Name
+        ownerid = $KeyAuth_OwnerID
+        secret = $KeyAuth_Secret
+        version = $KeyAuth_Version
+    }
+    foreach ($key in $params.Keys) { $body[$key] = $params[$key] }
+    
+    try {
+        $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -ErrorAction Stop
+        return $response
+    } catch {
+        return $null
     }
 }
 
-Pause
+# --- STEALTH AUTH SYSTEM ---
+$hwid = (Get-WmiObject Win32_ComputerSystemProduct).UUID 
+if ([string]::IsNullOrEmpty($hwid)) { $hwid = "SYS-$(env:COMPUTERNAME)" } 
+
+$keyPath = Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Diagnostics\sys_info.db"
+if (-not (Test-Path (Split-Path $keyPath))) { New-Item -ItemType Directory -Path (Split-Path $keyPath) -Force | Out-Null }
+
+$isAuthed = $false 
+# ระบบ Auto-Login ด้วย Session เดิม (ถ้ามี)
+if (Test-Path $keyPath) { 
+    $savedKey = (Get-Content $keyPath -Raw).Trim()
+    if ($savedKey) {
+        $res = Invoke-KeyAuth -action "license" -params @{ key = $savedKey; hwid = $hwid }
+        if ($res -and $res.success) { $isAuthed = $true }
+        else { Remove-Item $keyPath -Force }
+    }
+} 
+
+while (-not $isAuthed) {
+    Show-SyntexLogo
+    Write-Host "  [!] Authentication" -ForegroundColor Yellow 
+    Write-Host "  [>] ID: $($hwid.Substring(0,8))" -ForegroundColor Gray
+    Write-Host "  [?] Enter License Key : " -NoNewline; $inputKey = (Read-Host).Trim()
+    
+    if ([string]::IsNullOrEmpty($inputKey)) { continue }
+    
+    Write-Host "  [*] Verifying..." -ForegroundColor Cyan
+    $res = Invoke-KeyAuth -action "license" -params @{ key = $inputKey; hwid = $hwid }
+    
+    if ($res -and $res.success) { 
+        $isAuthed = $true
+        $inputKey | Out-File $keyPath -Force 
+        Write-Host "  [+] Access Granted! (Welcome $($res.info.username))" -ForegroundColor Green
+        Start-Sleep -Seconds 1
+    } else { 
+        $errMsg = if ($res) { $res.message } else { "Connection Error" }
+        Write-Host "  [-] $errMsg" -ForegroundColor Red
+        [WinSystemCore]::Beep(200, 300)
+        Start-Sleep -Seconds 2 
+    }
+} 
+
+# [7] Final Initialization
+[WinSystemCore]::SetCompactMode()
+Show-SyntexLogo 
+
+$baseTitle = " Syntex - Ghost x bypass "; $titleIdx = 0; $titleTimer = 0 
+
+Write-Host " [?] Mode (1/2): " -NoNewline; $mode = Read-Host 
+Write-Host " [?] Hotkey (A-Z): " -NoNewline; $hotkeyChar = (Read-Host).ToUpper(); if ([string]::IsNullOrEmpty($hotkeyChar)) { $hotkeyChar = "A" } 
+$userKey = [int][char]$hotkeyChar 
+
+# GHOSTX Pattern (1:1) - Keep as is for functionality
+$pattern = [byte[]] @(0x0F, 0x28, 0x4F, 0x60, 0x0F, 0x29, 0x95, 0xD0, 0x00, 0x00, 0x00, 0xF3) 
+$mask = [bool[]] @($true, $true, $true, $true, $true, $true, $true, $true, $true, $true, $true, $true) 
+$patch = [byte[]] @(0x0F, 0x28, 0x5F, 0x60, 0x0F, 0x29, 0x95, 0xD0, 0x00, 0x00, 0x00, 0xF3) 
+
+# Fallback Pattern (กรณีแบบยาวหาไม่เจอ)
+$patternAlt = [byte[]] @(0x0F, 0x28, 0x4F, 0x60, 0x0F, 0x29, 0x95, 0xD0)
+$maskAlt = [bool[]] @($true, $true, $true, $true, $true, $true, $true, $true)
+$patchAlt = [byte[]] @(0x0F, 0x28, 0x5F, 0x60, 0x0F, 0x29, 0x95, 0xD0)
+
+# Fallback 2 (สั้นที่สุด)
+$patternAlt2 = [byte[]] @(0x0F, 0x28, 0x4F, 0x60)
+$maskAlt2 = [bool[]] @($true, $true, $true, $true)
+$patchAlt2 = [byte[]] @(0x0F, 0x28, 0x5F, 0x60)
+
+$hProc = [IntPtr]::Zero 
+$patchAddr = [IntPtr]::Zero 
+$origBytes = $null 
+$isPatched = $false 
+$toggle = $false 
+$wasKeyDown = $false
+$wasF4Down = $false
+$lastPatchTime = 0
+
+# --- MAIN LOOP ---
+try { 
+    while ($true) { 
+        # ระบบ Animated Title (ข้อความวิ่งตรงหัวหน้าต่าง)
+        if ($titleTimer % 10 -eq 0) {
+            $displayTitle = $baseTitle.Substring($titleIdx) + $baseTitle.Substring(0, $titleIdx)
+            [Console]::Title = $displayTitle
+            $titleIdx = ($titleIdx + 1) % $baseTitle.Length
+        }
+        $titleTimer++
+
+        # เช็คสถานะปุ่มกดแบบ Real-time
+        $isKeyDown = ([WinSystemCore]::GetAsyncKeyState($userKey) -band 0x8000)
+        $isF4Down = ([WinSystemCore]::GetAsyncKeyState(0x73) -band 0x8000)
+        $isEndDown = ([WinSystemCore]::GetAsyncKeyState(0x23) -band 0x8000)
+
+        # กด END เพื่อปิดและล้างร่องรอย
+        if ($isEndDown) { break } 
+
+        # กด F4 เพื่อสแกนหาตำแหน่งในเกม
+        if ($isF4Down -and -not $wasF4Down) { 
+            Write-Host "  [*] INITIALIZING SCAN..." -ForegroundColor Yellow
+            $proc = Get-Process | Where-Object { $_.ProcessName -match "$pName1|$pName2" } | Select-Object -First 1 
+            if ($proc) { 
+                # ระบบ Loading 1-100% แบบสวยๆ (ใช้ ASCII เพื่อความชัวร์)
+                for ($i = 0; $i -le 100; $i += 5) {
+                    $barCount = [int]($i / 5)
+                    $bar = ("#" * $barCount) + ("-" * (20 - $barCount))
+                    Write-Host "`r  [ $bar ] $i% " -NoNewline -ForegroundColor Cyan
+                    Start-Sleep -Milliseconds 50
+                }
+                Write-Host "`n"
+
+                if ($hProc -ne [IntPtr]::Zero) { [WinSystemCore]::CloseHandle($hProc) | Out-Null } 
+                $hProc = [WinSystemCore]::OpenProcess(0x1F0FFF, $false, $proc.Id) 
+                $patchAddr = [WinSystemCore]::QuerySystemData($hProc, $pattern, $mask) 
+                
+                # ถ้าหาไม่เจอ ให้ลองหาด้วย Fallback Pattern (สั้นลง)
+                if ($patchAddr -eq [IntPtr]::Zero) {
+                    $patchAddr = [WinSystemCore]::QuerySystemData($hProc, $patternAlt, $maskAlt)
+                    if ($patchAddr -ne [IntPtr]::Zero) {
+                        $pattern = $patternAlt
+                        $patch = $patchAlt
+                    } else {
+                        # ลองแบบสั้นที่สุด
+                        $patchAddr = [WinSystemCore]::QuerySystemData($hProc, $patternAlt2, $maskAlt2)
+                        if ($patchAddr -ne [IntPtr]::Zero) {
+                            $pattern = $patternAlt2
+                            $patch = $patchAlt2
+                        }
+                    }
+                }
+
+                if ($patchAddr -ne [IntPtr]::Zero) { 
+                    $origBytes = New-Object byte[] $patch.Length 
+                    [int]$read = 0 
+                    [WinSystemCore]::ReadProcessMemory($hProc, $patchAddr, $origBytes, $origBytes.Length, [ref]$read) | Out-Null 
+                    
+                    Write-Host "  [+] INJECTION SUCCESSFUL!" -ForegroundColor Green 
+                    [WinSystemCore]::Beep(1000, 200) | Out-Null 
+                    
+                    # --- สร้างหน้าต่างเล็กแยกออกมา (Status Window) ---
+                    $uiHotkey = [char]$userKey
+                    $statusCmd = @"
+`$Host.UI.RawUI.WindowTitle = 'SYNTEX STATUS'
+`$size = New-Object System.Management.Automation.Host.Size(30, 6)
+`$Host.UI.RawUI.WindowSize = `$size
+`$Host.UI.RawUI.BufferSize = `$size
+Clear-Host
+Write-Host "  SYNTEX PREMIUM" -ForegroundColor Cyan
+Write-Host "  GAME: " -NoNewline -ForegroundColor White; Write-Host "RUNNING" -ForegroundColor Green
+Write-Host "  KEY : " -NoNewline -ForegroundColor White; Write-Host "$uiHotkey" -ForegroundColor Yellow
+while(`$true) { Start-Sleep -Seconds 10 }
+"@
+                    Start-Process powershell -ArgumentList "-NoProfile", "-Command", $statusCmd -WindowStyle Normal
+
+                    Write-Host "  [>] Hiding main window..." -ForegroundColor Gray
+                    Start-Sleep -Seconds 2
+                    [WinSystemCore]::ShowWindow([WinSystemCore]::GetConsoleWindow(), 0) | Out-Null 
+                } else { 
+                    Write-Host "  [-] Error: Diagnostic Point Not Found." -ForegroundColor Red 
+                    [WinSystemCore]::Beep(300, 500) | Out-Null 
+                } 
+            } else {
+                Write-Host "  [-] Error: Target Process Not Found." -ForegroundColor Red
+            }
+        } 
+        $wasF4Down = $isF4Down # อัปเดตสถานะ F4
+
+        if ($patchAddr -ne [IntPtr]::Zero) { 
+            $shouldPatch = $false 
+            if ($mode -eq "1") { # โหมด Toggle (กดครั้งเดียวเปิด/ปิด)
+                if ($isKeyDown -and -not $wasKeyDown) { 
+                    $toggle = -not $toggle 
+                    # เสียงยืนยันสถานะ: สูง = ON, ต่ำ = OFF
+                    $freq = if ($toggle) { 1200 } else { 600 }
+                    [WinSystemCore]::Beep($freq, 100) | Out-Null
+                } 
+                $shouldPatch = $toggle 
+            } else { # โหมด Hold (กดค้าง)
+                $shouldPatch = $isKeyDown
+            }
+
+            # ตรวจสอบและทำการ Patch Memory
+            $currentTime = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
+            # ทำการฉีดโค้ดถ้า: 1. เปลี่ยนสถานะเป็น ON หรือ 2. เป็นโหมด Toggle และถึงเวลา Refresh (ทุก 1.5 วินาที)
+            if ($shouldPatch -and ($shouldPatch -ne $isPatched -or ($mode -eq "1" -and ($currentTime - $lastPatchTime) -gt 1500))) { 
+                [uint32]$old = 0; [int]$written = 0 
+                if ([WinSystemCore]::VirtualProtectEx($hProc, $patchAddr, $patch.Length, 0x40, [ref]$old)) {
+                    if ([WinSystemCore]::WriteProcessMemory($hProc, $patchAddr, $patch, $patch.Length, [ref]$written)) {
+                        [WinSystemCore]::VirtualProtectEx($hProc, $patchAddr, $patch.Length, $old, [ref]$old) | Out-Null 
+                        $isPatched = $true
+                        $lastPatchTime = $currentTime
+                    } else {
+                        # ถ้าเขียนไม่ได้ (เช่น handle หลุด) ให้รีเซ็ตสถานะ
+                        $isPatched = $false
+                    }
+                }
+            } elseif (-not $shouldPatch -and $isPatched) {
+                # คืนค่าเดิม (ทำให้เป็นปกติ)
+                [uint32]$old = 0; [int]$written = 0 
+                if ([WinSystemCore]::VirtualProtectEx($hProc, $patchAddr, $origBytes.Length, 0x40, [ref]$old)) {
+                    [WinSystemCore]::WriteProcessMemory($hProc, $patchAddr, $origBytes, $origBytes.Length, [ref]$written) | Out-Null 
+                    [WinSystemCore]::VirtualProtectEx($hProc, $patchAddr, $origBytes.Length, $old, [ref]$old) | Out-Null 
+                    $isPatched = $false 
+                }
+            }
+            $wasKeyDown = $isKeyDown # เก็บสถานะปุ่ม Hotkey
+        } 
+        $wasF4Down = $isF4Down # อัปเดตสถานะ F4 สำหรับลูปถัดไป
+        Start-Sleep -Milliseconds 10 # เพิ่มความไวในการตอบสนอง (จาก 20ms เป็น 10ms)
+    } 
+} finally { 
+    # CLEAN UP BEFORE EXIT
+    if ($hProc -ne [IntPtr]::Zero) { 
+        if ($isPatched -and $null -ne $origBytes) { 
+            [uint32]$old = 0; [int]$written = 0 
+            [WinSystemCore]::VirtualProtectEx($hProc, $patchAddr, $origBytes.Length, 0x40, [ref]$old) | Out-Null 
+            [WinSystemCore]::WriteProcessMemory($hProc, $patchAddr, $origBytes, $origBytes.Length, [ref]$written) | Out-Null 
+        } 
+        [WinSystemCore]::CloseHandle($hProc) | Out-Null 
+    } 
+
+    # --- STEALTH CLEANUP: CLEAR POWERSHELL HISTORY ---
+    try {
+        Clear-History -ErrorAction SilentlyContinue
+        if (Get-Command Set-PSReadLineOption -ErrorAction SilentlyContinue) {
+            Set-PSReadLineOption -HistorySaveStyle SaveNothing
+        }
+        $histFile = "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt"
+        if (Test-Path $histFile) { Clear-Content $histFile -ErrorAction SilentlyContinue }
+    } catch {}
+
+    [WinSystemCore]::ShowWindow([WinSystemCore]::GetConsoleWindow(), 5) | Out-Null 
+}
